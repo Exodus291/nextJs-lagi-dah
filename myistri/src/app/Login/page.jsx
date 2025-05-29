@@ -48,7 +48,6 @@ export default function AuthPage() {
     setTimeout(() => {
       // Simulate API call
       if (formData.email === 'demo@example.com' && formData.password === 'password') {
-        alert('Login successful!');
         router.push('/'); // Redirect to dashboard or home page
       } else {
         setError('Invalid email or password');
