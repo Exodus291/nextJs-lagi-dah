@@ -132,12 +132,21 @@ export default function AuthPage() {
     <div className="h-screen overflow-hidden bg-gradient-to-br from-pink-100 via-rose-50 to-white flex">
       {/* Left Side - Hero */}
       <div className="hidden lg:flex lg:w-3/5 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-pink-300/30 to-rose-200/30 z-10"></div>
-        <img src="/91108963_1.jpg" alt="Background" className="absolute inset-0 w-full h-full object-cover" />
-        <div className="absolute top-20 left-20 w-32 h-32 bg-pink-200/40 rounded-full blur-xl animate-pulse"></div>
-        <div className="absolute bottom-40 right-32 w-24 h-24 bg-rose-200/50 rounded-full blur-lg animate-bounce"></div>
-        <div className="absolute top-1/2 left-1/3 w-16 h-16 bg-pink-300/40 rounded-full blur-md animate-pulse delay-1000"></div>
+        {/* Background Image - Made smaller and centered */}
+        <img src="/91108963_1.jpg" alt="Background" className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-11/12 h-11/12 object-cover opacity-75 rounded-2xl shadow-lg" />
+        {/* Subtle Overlay - z-1 so decorative elements can be above it */}
+        <div className="absolute inset-0 bg-gradient-to-br from-pink-300/20 to-rose-200/20 z-1"></div>
+        
+        {/* Existing Decorative Animated Elements - ensure they are above the overlay with z-5 */}
+        <div className="absolute top-20 left-20 w-32 h-32 bg-pink-200/40 rounded-full blur-xl animate-pulse z-5"></div>
+        <div className="absolute bottom-40 right-32 w-24 h-24 bg-rose-200/50 rounded-full blur-lg animate-bounce z-5"></div>
+        <div className="absolute top-1/2 left-1/3 w-16 h-16 bg-pink-300/40 rounded-full blur-md animate-pulse delay-1000 z-5"></div>
 
+        {/* New Decorative Animations - also z-5 */}
+        <div className="absolute top-10 right-16 w-12 h-12 bg-purple-300/30 rounded-full blur-md animate-pulse [animation-duration:1.8s] z-5"></div>
+        <div className="absolute bottom-16 left-1/4 w-20 h-20 bg-pink-200/20 rounded-xl blur-lg animate-ping opacity-60 z-5"></div>
+        <div className="absolute top-2/3 right-1/2 w-14 h-14 bg-rose-100/40 rounded-full blur-sm animate-bounce [animation-duration:3.5s] z-5"></div>
+        
         <div className="relative z-20 flex flex-col justify-center items-start p-16 text-gray-800 max-w-lg">
           <AnimatePresence mode="wait">
             {mode === LOGIN_MODE ? (
