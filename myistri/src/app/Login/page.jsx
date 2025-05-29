@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Eye, EyeOff, Mail, ArrowRight, AlertCircle, Heart, User, Lock } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 const LOGIN_MODE = 'login';
 const REGISTER_MODE = 'register';
@@ -20,6 +21,7 @@ export default function AuthPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
   const switchModeHandler = (newMode) => {
     setMode(newMode);
@@ -47,7 +49,7 @@ export default function AuthPage() {
       // Simulate API call
       if (formData.email === 'demo@example.com' && formData.password === 'password') {
         alert('Login successful!');
-        // router.push('/'); // Redirect to dashboard or home page
+        router.push('/'); // Redirect to dashboard or home page
       } else {
         setError('Invalid email or password');
       }
@@ -83,6 +85,15 @@ export default function AuthPage() {
       // Setelah register berhasil, langsung switch ke login form
       switchModeHandler(LOGIN_MODE);
     }, 1500);
+  };
+
+  const handleFormSubmit = (e) => {
+    e.preventDefault(); // Mencegah reload halaman standar form
+    if (mode === LOGIN_MODE) {
+      handleLoginSubmit();
+    } else {
+      handleRegisterSubmit();
+    }
   };
 
   return (
@@ -129,7 +140,10 @@ export default function AuthPage() {
       </div>
 
       {/* Right Side - Form */}
-      <div className={`flex w-full lg:w-2/5 items-center justify-center p-8 h-full${mode === REGISTER_MODE ? 'overflow-y-hidden' : 'overflow-y-auto'}`}>
+      <div className={`
+        flex w-full lg:w-2/5 items-center justify-center p-8 h-full
+        ${mode === REGISTER_MODE ? 'overflow-y-hidden' : 'overflow-y-auto'}
+      `}>
         <div className="w-full max-w-md">
           <div className="bg-white/70 backdrop-blur-xl rounded-3xl shadow-2xl border border-pink-200/50 p-8">
             <div className="text-center mb-8 relative min-h-[160px]"> {/* Container for title/icon cross-fade, adjust min-h as needed */}
@@ -158,146 +172,150 @@ export default function AuthPage() {
               </div>
             )}
 
-            <div className="space-y-6">
-              {/* Name Field - Animatable */}
-              <div
-                className={`grid transition-all duration-500 ease-in-out ${
-                  mode === REGISTER_MODE ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
-                }`}
-              >
-                <div className="overflow-hidden"> {/* Inner wrapper for grid animation */}
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                      <User className="w-5 h-5 text-gray-500" />
+            <form onSubmit={handleFormSubmit} className="space-y-6">
+              <div> {/* Wrapper tambahan untuk menjaga space-y-6 jika diperlukan, atau bisa langsung di form */}
+                {/* Name Field - Animatable */}
+                <div
+                  className={`grid transition-all duration-500 ease-in-out ${
+                    mode === REGISTER_MODE ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
+                  }`}
+                >
+                  <div className="overflow-hidden"> {/* Inner wrapper for grid animation */}
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <User className="w-5 h-5 text-gray-500" />
+                      </div>
+                      <input
+                        type="text"
+                        name="name"
+                        // required={mode === REGISTER_MODE} // 'required' di input dalam form akan memicu validasi browser bawaan
+                        value={mode === REGISTER_MODE ? formData.name : ''} // Clear value when hidden
+                        onChange={handleChange}
+                        placeholder="Full Name"
+                        className="w-full pl-12 pr-4 py-4 bg-white/80 backdrop-blur-sm border border-pink-200 rounded-xl text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all duration-300"
+                      />
                     </div>
-                    <input
-                      type="text"
-                      name="name"
-                      required
-                      value={mode === REGISTER_MODE ? formData.name : ''} // Clear value when hidden
-                      onChange={handleChange}
-                      placeholder="Full Name"
-                      className="w-full pl-12 pr-4 py-4 bg-white/80 backdrop-blur-sm border border-pink-200 rounded-xl text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all duration-300"
-                    />
                   </div>
                 </div>
-              </div>
 
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <Mail className="w-5 h-5 text-gray-500" />
+                {/* Email Field - perlu margin atas jika Name field tidak ada */}
+                <div className={`relative ${mode === LOGIN_MODE ? 'mt-0' : 'mt-6'}`}>
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <Mail className="w-5 h-5 text-gray-500" />
+                  </div>
+                  <input
+                    type="email"
+                    name="email"
+                    // required
+                    value={formData.email}
+                    onChange={handleChange}
+                    placeholder="Email address"
+                    className="w-full pl-12 pr-4 py-4 bg-white/80 backdrop-blur-sm border border-pink-200 rounded-xl text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all duration-300"
+                  />
                 </div>
-                <input
-                  type="email"
-                  name="email"
-                  required
-                  value={formData.email}
-                  onChange={handleChange}
-                  placeholder="Email address"
-                  className="w-full pl-12 pr-4 py-4 bg-white/80 backdrop-blur-sm border border-pink-200 rounded-xl text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all duration-300"
-                />
-              </div>
 
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <Lock className="w-5 h-5 text-gray-500" />
+                <div className="relative mt-6">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <Lock className="w-5 h-5 text-gray-500" />
+                  </div>
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    name="password"
+                    // required
+                    value={formData.password}
+                    onChange={handleChange}
+                    placeholder="Password"
+                    className="w-full pl-12 pr-12 py-4 bg-white/80 backdrop-blur-sm border border-pink-200 rounded-xl text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all duration-300"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-500 hover:text-gray-700 transition-colors"
+                  >
+                    {showPassword ? (
+                      <EyeOff className="w-5 h-5" />
+                    ) : (
+                      <Eye className="w-5 h-5" />
+                    )}
+                  </button>
                 </div>
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  name="password"
-                  required
-                  value={formData.password}
-                  onChange={handleChange}
-                  placeholder="Password"
-                  className="w-full pl-12 pr-12 py-4 bg-white/80 backdrop-blur-sm border border-pink-200 rounded-xl text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all duration-300"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-500 hover:text-gray-700 transition-colors"
+
+                {/* Confirm Password Field - Animatable */}
+                <div
+                  className={`grid transition-all duration-500 ease-in-out ${
+                    mode === REGISTER_MODE ? 'grid-rows-[1fr] opacity-100 mt-6' : 'grid-rows-[0fr] opacity-0 mt-0' // Tambah mt-6 saat visible
+                  }`}
                 >
-                  {showPassword ? (
-                    <EyeOff className="w-5 h-5" />
+                  <div className="overflow-hidden"> {/* Inner wrapper for grid animation */}
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <Lock className="w-5 h-5 text-gray-500" />
+                      </div>
+                      <input
+                        type={showConfirmPassword ? 'text' : 'password'}
+                        name="confirmPassword"
+                        // required={mode === REGISTER_MODE}
+                        value={mode === REGISTER_MODE ? formData.confirmPassword : ''} // Clear value when hidden
+                        onChange={handleChange}
+                        placeholder="Confirm Password"
+                        className="w-full pl-12 pr-12 py-4 bg-white/80 backdrop-blur-sm border border-pink-200 rounded-xl text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all duration-300"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => mode === REGISTER_MODE && setShowConfirmPassword(!showConfirmPassword)}
+                        className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-500 hover:text-gray-700 transition-colors"
+                      >
+                        {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  type="submit" // Ubah tipe tombol menjadi submit
+                  disabled={loading}
+                  className="w-full mt-6 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white font-semibold py-4 rounded-xl transition-all duration-300 shadow-lg hover:shadow-2xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2 group"
+                >
+                  {loading ? (
+                    <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                   ) : (
-                    <Eye className="w-5 h-5" />
+                    <>
+                      <span>{mode === LOGIN_MODE ? 'Sign In' : 'Sign Up'}</span>
+                      <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                    </>
                   )}
                 </button>
               </div>
+            </form>
 
-              {/* Confirm Password Field - Animatable */}
-              <div
-                className={`grid transition-all duration-500 ease-in-out ${
-                  mode === REGISTER_MODE ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
-                }`}
-              >
-                <div className="overflow-hidden"> {/* Inner wrapper for grid animation */}
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                      <Lock className="w-5 h-5 text-gray-500" />
-                    </div>
-                    <input
-                      type={showConfirmPassword ? 'text' : 'password'}
-                      name="confirmPassword"
-                      required={mode === REGISTER_MODE}
-                      value={mode === REGISTER_MODE ? formData.confirmPassword : ''} // Clear value when hidden
-                      onChange={handleChange}
-                      placeholder="Confirm Password"
-                      className="w-full pl-12 pr-12 py-4 bg-white/80 backdrop-blur-sm border border-pink-200 rounded-xl text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all duration-300"
-                    />
+            {/* Switch mode text - Animatable */}
+            <div className="text-center text-gray-600 relative min-h-[24px] mt-6"> {/* min-h for stability, tambah mt-6 */}
+              <div className={`absolute inset-x-0 top-0 transition-opacity duration-500 ease-in-out ${mode === LOGIN_MODE ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+                <>
+                    <span>Don't have an account? </span>
                     <button
                       type="button"
-                      onClick={() => mode === REGISTER_MODE && setShowConfirmPassword(!showConfirmPassword)}
-                      className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-500 hover:text-gray-700 transition-colors"
+                      onClick={() => switchModeHandler(REGISTER_MODE)}
+                      className="text-pink-600 hover:text-pink-700 font-semibold transition-colors"
                     >
-                      {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                      Register
                     </button>
-                  </div>
-                </div>
-              </div>
-
-              <button
-                onClick={mode === LOGIN_MODE ? handleLoginSubmit : handleRegisterSubmit}
-                disabled={loading}
-                className="w-full bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white font-semibold py-4 rounded-xl transition-all duration-300 shadow-lg hover:shadow-2xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2 group"
-              >
-                {loading ? (
-                  <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                ) : (
-                  <>
-                    <span>{mode === LOGIN_MODE ? 'Sign In' : 'Sign Up'}</span>
-                    <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                   </>
-                )}
-              </button>
-
-              {/* Switch mode text - Animatable */}
-              <div className="text-center text-gray-600 relative min-h-[24px]"> {/* min-h for stability */}
-                <div className={`absolute inset-x-0 top-0 transition-opacity duration-500 ease-in-out ${mode === LOGIN_MODE ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-                  <>
-                      <span>Don't have an account? </span>
-                      <button
-                        type="button"
-                        onClick={() => switchModeHandler(REGISTER_MODE)}
-                        className="text-pink-600 hover:text-pink-700 font-semibold transition-colors"
-                      >
-                        Register
-                      </button>
-                    </>
-                </div>
-                <div className={`absolute inset-x-0 top-0 transition-opacity duration-500 ease-in-out ${mode === REGISTER_MODE ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-                  <>
-                      <span>Already have an account? </span>
-                      <button
-                        type="button"
-                        onClick={() => switchModeHandler(LOGIN_MODE)}
-                        className="text-pink-600 hover:text-pink-700 font-semibold transition-colors"
-                      >
-                        Sign in
-                      </button>
-                    </>
-                </div>
+              </div>
+              <div className={`absolute inset-x-0 top-0 transition-opacity duration-500 ease-in-out ${mode === REGISTER_MODE ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+                <>
+                    <span>Already have an account? </span>
+                    <button
+                      type="button"
+                      onClick={() => switchModeHandler(LOGIN_MODE)}
+                      className="text-pink-600 hover:text-pink-700 font-semibold transition-colors"
+                    >
+                      Sign in
+                    </button>
+                  </>
               </div>
             </div>
+
           </div>
         </div>
       </div>
