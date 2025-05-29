@@ -23,9 +23,11 @@ export const config = {
     /*
      * Match all request paths except for the ones starting with:
      * - api (API routes)
-     * - _next/static (static assets)
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
+     * - Any files with common static asset extensions (e.g., .jpg, .png, .svg)
      */
-    '/((?!api|_next/static|favicon.ico).*)',
+    '/((?!api|_next/static|_next/image|favicon.ico|.*\.(?:png|jpg|jpeg|gif|svg|webp|ico|css|js)).*)',
   ],
 };
