@@ -45,7 +45,6 @@ const periods = {
 const categoryData = [
   { name: 'Makanan', value: 45, color: '#ec4899' },
   { name: 'Minuman', value: 30, color: '#f43f5e' },
-  { name: 'Snack', value: 15, color: '#fbbf24' },
   { name: 'Lainnya', value: 10, color: '#a855f7' }
 ];
 
@@ -145,7 +144,7 @@ export default function LaporanPOSPage() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
           <StatCard
             title="Total Pendapatan"
             value={formatRupiah(totals.totalPendapatan)}
@@ -161,14 +160,6 @@ export default function LaporanPOSPage() {
             trend="up"
             trendValue="8.3"
             color="purple"
-          />
-          <StatCard
-            title="Total Transaksi"
-            value={totals.totalTransaksi.toLocaleString('id-ID')}
-            icon={ShoppingCart}
-            trend="down"
-            trendValue="2.1"
-            color="orange"
           />
           <StatCard
             title="Rata-rata Transaksi"
@@ -191,7 +182,6 @@ export default function LaporanPOSPage() {
                 {[
                   { key: 'pendapatan', label: 'Pendapatan', color: '#ec4899' },
                   { key: 'pelanggan', label: 'Pelanggan', color: '#f43f5e' },
-                  { key: 'transaksi', label: 'Transaksi', color: '#fbbf24' }
                 ].map((chart) => (
                   <button
                     key={chart.key}
@@ -318,7 +308,6 @@ export default function LaporanPOSPage() {
                   <th className="text-left py-3 px-4 font-semibold text-gray-700">Tanggal</th>
                   <th className="text-right py-3 px-4 font-semibold text-gray-700">Pendapatan</th>
                   <th className="text-right py-3 px-4 font-semibold text-gray-700">Pelanggan</th>
-                  <th className="text-right py-3 px-4 font-semibold text-gray-700">Transaksi</th>
                   <th className="text-right py-3 px-4 font-semibold text-gray-700">Avg/Transaksi</th>
                 </tr>
               </thead>
@@ -331,9 +320,6 @@ export default function LaporanPOSPage() {
                     </td>
                     <td className="py-3 px-4 text-right text-gray-600">
                       {item.pelanggan.toLocaleString('id-ID')}
-                    </td>
-                    <td className="py-3 px-4 text-right text-gray-600">
-                      {item.transaksi.toLocaleString('id-ID')}
                     </td>
                     <td className="py-3 px-4 text-right font-medium text-pink-600">
                       {formatRupiah(item.pendapatan / item.transaksi)}
