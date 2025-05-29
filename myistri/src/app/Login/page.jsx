@@ -12,7 +12,8 @@ const initialFormState = {
   name: '',
   email: '',
   password: '',
-  confirmPassword: ''
+  confirmPassword: '',
+  referralCode: '',
 };
 
 export default function AuthPage() {
@@ -94,7 +95,7 @@ export default function AuthPage() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
-                transition={{ duration: 0.3 }}
+                transition={{ duration: 0.5, ease: "easeInOut" }} // Smoother transition
               >
                 <div className="w-16 h-16 bg-gradient-to-r from-pink-400 to-rose-400 rounded-2xl flex items-center justify-center mb-6 shadow-lg">
                   <Heart className="w-8 h-8 text-white" />
@@ -112,7 +113,7 @@ export default function AuthPage() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
-                transition={{ duration: 0.3 }}
+                transition={{ duration: 0.5, ease: "easeInOut" }} // Smoother transition
               >
                 <div className="w-16 h-16 bg-gradient-to-r from-pink-400 to-rose-400 rounded-2xl flex items-center justify-center mb-6 shadow-lg">
                   <User className="w-8 h-8 text-white" />
@@ -132,22 +133,22 @@ export default function AuthPage() {
       {/* Right Side - Form */}
       <div className={`
         flex w-full lg:w-2/5 items-center justify-center p-8 h-full
-        ${mode === REGISTER_MODE ? 'overflow-y-hidden' : 'overflow-y-auto'}
+        overflow-y-auto /* Always allow scroll if needed */
       `}>
         <div className="w-full max-w-md">
-          <div className="bg-white/70 backdrop-blur-xl rounded-3xl shadow-2xl border border-pink-200/50 p-8">
-            <div className="text-center mb-8 relative min-h-[160px]"> {/* Container for title/icon cross-fade, adjust min-h as needed */}
+          <div className="bg-white/70 backdrop-blur-xl rounded-3xl shadow-2xl border border-pink-200/50 p-6"> {/* Reduced padding */}
+            <div className="text-center mb-6 relative min-h-[140px]"> {/* Reduced mb and min-h */}
               {/* Login Title/Icon */}
               <div className={`absolute inset-x-0 top-0 transition-opacity duration-500 ease-in-out ${mode === LOGIN_MODE ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-                <div className="w-16 h-16 bg-gradient-to-r from-pink-500 to-rose-500 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
+                <div className="w-16 h-16 bg-gradient-to-r from-pink-500 to-rose-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg"> {/* Reduced mb */}
                   <Heart className="w-8 h-8 text-white" />
                 </div>
                 <h2 className="text-3xl font-bold text-gray-800 mb-2">Welcome Back</h2>
                 <p className="text-gray-600">Sign in to continue your journey</p>
               </div>
               {/* Register Title/Icon */}
-              <div className={`absolute inset-x-0 top-0 transition-opacity duration-500 ease-in-out ${mode === REGISTER_MODE ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-                <div className="w-16 h-16 bg-gradient-to-r from-pink-500 to-rose-500 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg"> {/* Different color for register */}
+              <div className={`absolute inset-x-0 top-0 transition-opacity duration-500 ease-in-out ${mode === REGISTER_MODE ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}> 
+                <div className="w-16 h-16 bg-gradient-to-r from-pink-500 to-rose-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg"> {/* Reduced mb */}
                   <User className="w-8 h-8 text-white" />
                 </div>
                 <h2 className="text-3xl font-bold text-gray-800 mb-2">Create Account</h2>
@@ -156,14 +157,14 @@ export default function AuthPage() {
             </div>
 
             {error && (
-              <div className="mb-6 p-4 bg-red-100 border border-red-300 rounded-xl flex items-center space-x-3 text-red-700">
+              <div className="mb-4 p-3 bg-red-100 border border-red-300 rounded-xl flex items-center space-x-3 text-red-700"> {/* Reduced mb and p */}
                 <AlertCircle className="w-5 h-5 flex-shrink-0" />
                 <span className="text-sm">{error}</span>
               </div>
             )}
 
-            <form onSubmit={handleFormSubmit} className="space-y-6">
-              <div> {/* Wrapper tambahan untuk menjaga space-y-6 jika diperlukan, atau bisa langsung di form */}
+            <form onSubmit={handleFormSubmit} className="space-y-4"> {/* Reduced space-y */}
+              <div> 
                 {/* Name Field - Animatable */}
                 <div
                   className={`grid transition-all duration-500 ease-in-out ${
@@ -182,14 +183,14 @@ export default function AuthPage() {
                         value={mode === REGISTER_MODE ? formData.name : ''} // Clear value when hidden
                         onChange={handleChange}
                         placeholder="Full Name"
-                        className="w-full pl-12 pr-4 py-4 bg-white/80 backdrop-blur-sm border border-pink-200 rounded-xl text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all duration-300"
+                        className="w-full pl-12 pr-4 py-3 bg-white/80 backdrop-blur-sm border border-pink-200 rounded-xl text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all duration-300" // Reduced py
                       />
                     </div>
                   </div>
                 </div>
 
                 {/* Email Field - perlu margin atas jika Name field tidak ada */}
-                <div className={`relative ${mode === LOGIN_MODE ? 'mt-0' : 'mt-6'}`}>
+                <div className={`relative ${mode === LOGIN_MODE ? 'mt-0' : 'mt-4'}`}> {/* Reduced mt */}
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                     <Mail className="w-5 h-5 text-gray-500" />
                   </div>
@@ -200,11 +201,11 @@ export default function AuthPage() {
                     value={formData.email}
                     onChange={handleChange}
                     placeholder="Email address"
-                    className="w-full pl-12 pr-4 py-4 bg-white/80 backdrop-blur-sm border border-pink-200 rounded-xl text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all duration-300"
+                    className="w-full pl-12 pr-4 py-3 bg-white/80 backdrop-blur-sm border border-pink-200 rounded-xl text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all duration-300" // Reduced py
                   />
                 </div>
 
-                <div className="relative mt-6">
+                <div className="relative mt-4"> {/* Reduced mt */}
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                     <Lock className="w-5 h-5 text-gray-500" />
                   </div>
@@ -215,7 +216,7 @@ export default function AuthPage() {
                     value={formData.password}
                     onChange={handleChange}
                     placeholder="Password"
-                    className="w-full pl-12 pr-12 py-4 bg-white/80 backdrop-blur-sm border border-pink-200 rounded-xl text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all duration-300"
+                    className="w-full pl-12 pr-12 py-3 bg-white/80 backdrop-blur-sm border border-pink-200 rounded-xl text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all duration-300" // Reduced py
                   />
                   <button
                     type="button"
@@ -233,7 +234,7 @@ export default function AuthPage() {
                 {/* Confirm Password Field - Animatable */}
                 <div
                   className={`grid transition-all duration-500 ease-in-out ${
-                    mode === REGISTER_MODE ? 'grid-rows-[1fr] opacity-100 mt-6' : 'grid-rows-[0fr] opacity-0 mt-0' // Tambah mt-6 saat visible
+                    mode === REGISTER_MODE ? 'grid-rows-[1fr] opacity-100 mt-4' : 'grid-rows-[0fr] opacity-0 mt-0' // Reduced mt
                   }`}
                 >
                   <div className="overflow-hidden"> {/* Inner wrapper for grid animation */}
@@ -248,7 +249,7 @@ export default function AuthPage() {
                         value={mode === REGISTER_MODE ? formData.confirmPassword : ''} // Clear value when hidden
                         onChange={handleChange}
                         placeholder="Confirm Password"
-                        className="w-full pl-12 pr-12 py-4 bg-white/80 backdrop-blur-sm border border-pink-200 rounded-xl text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all duration-300"
+                        className="w-full pl-12 pr-12 py-3 bg-white/80 backdrop-blur-sm border border-pink-200 rounded-xl text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all duration-300" // Reduced py
                       />
                       <button
                         type="button"
@@ -261,10 +262,33 @@ export default function AuthPage() {
                   </div>
                 </div>
 
+                {/* Referral Field - Animatable */}
+<div
+  className={`grid transition-all duration-500 ease-in-out ${
+    mode === REGISTER_MODE ? 'grid-rows-[1fr] opacity-100 mt-4' : 'grid-rows-[0fr] opacity-0 mt-0' // Reduced mt
+  }`}
+>
+  <div className="overflow-hidden">
+    <div className="relative">
+      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+        <User className="w-5 h-5 text-gray-500" />
+      </div>
+      <input
+        type="text" 
+        name="referralCode" // Corrected name attribute
+        value={mode === REGISTER_MODE ? formData.referralCode : ''}
+        onChange={handleChange}
+        placeholder="Referral Code (optional)"
+        className="w-full pl-12 pr-4 py-3 bg-white/80 backdrop-blur-sm border border-pink-200 rounded-xl text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all duration-300" // Reduced py
+      />
+    </div>
+  </div>
+</div>
+
                 <button
                   type="submit" // Ubah tipe tombol menjadi submit
                   disabled={loading}
-                  className="w-full mt-6 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white font-semibold py-4 rounded-xl transition-all duration-300 shadow-lg hover:shadow-2xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2 group"
+                  className="w-full mt-5 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white font-semibold py-3 rounded-xl transition-all duration-300 shadow-lg hover:shadow-2xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2 group" // Reduced mt and py
                 >
                   {loading ? (
                     <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
@@ -279,7 +303,7 @@ export default function AuthPage() {
             </form>
 
             {/* Switch mode text - Animatable */}
-            <div className="text-center text-gray-600 relative min-h-[24px] mt-6"> {/* min-h for stability, tambah mt-6 */}
+            <div className="text-center text-gray-600 relative min-h-[24px] mt-5"> {/* Reduced mt */}
               <div className={`absolute inset-x-0 top-0 transition-opacity duration-500 ease-in-out ${mode === LOGIN_MODE ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
                 <>
                     <span>Don't have an account? </span>
