@@ -1,8 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Eye, EyeOff, Mail, ArrowRight, AlertCircle, Heart, User, Lock } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const LOGIN_MODE = 'login';
 const REGISTER_MODE = 'register';
@@ -37,7 +38,6 @@ export default function AuthPage() {
     if (error) setError('');
   };
 
-  // Login submit simulation
   const handleLoginSubmit = () => {
     if (!formData.email || !formData.password) {
       setError('Email and password are required.');
@@ -46,9 +46,8 @@ export default function AuthPage() {
     setLoading(true);
     setError('');
     setTimeout(() => {
-      // Simulate API call
       if (formData.email === 'demo@example.com' && formData.password === 'password') {
-        router.push('/'); // Redirect to dashboard or home page
+        router.push('/');
       } else {
         setError('Invalid email or password');
       }
@@ -56,43 +55,25 @@ export default function AuthPage() {
     }, 1500);
   };
 
-  // Register submit simulation with basic validation
   const handleRegisterSubmit = () => {
-    if (!formData.name.trim()) {
-      setError('Name is required');
-      return;
-    }
-    if (!formData.email.trim()) {
-      setError('Email is required');
-      return;
-    }
-    if (!formData.password) {
-      setError('Password is required');
-      return;
-    }
-    if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
-      return;
-    }
+    if (!formData.name.trim()) return setError('Name is required');
+    if (!formData.email.trim()) return setError('Email is required');
+    if (!formData.password) return setError('Password is required');
+    if (formData.password !== formData.confirmPassword) return setError('Passwords do not match');
 
     setLoading(true);
     setError('');
     setTimeout(() => {
-      // Simulate API call
       alert(`Registered successfully!\nName: ${formData.name}\nEmail: ${formData.email}`);
       setLoading(false);
-      // Setelah register berhasil, langsung switch ke login form
       switchModeHandler(LOGIN_MODE);
     }, 1500);
   };
 
   const handleFormSubmit = (e) => {
-    e.preventDefault(); // Mencegah reload halaman standar form
-    if (mode === LOGIN_MODE) {
-      handleLoginSubmit();
-    } else {
-      handleRegisterSubmit();
-    }
+    e.preventDefault();
+    if (mode === LOGIN_MODE) handleLoginSubmit();
+    else handleRegisterSubmit();
   };
 
   return (
@@ -100,41 +81,51 @@ export default function AuthPage() {
       {/* Left Side - Hero */}
       <div className="hidden lg:flex lg:w-3/5 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-pink-300/30 to-rose-200/30 z-10"></div>
-        <img
-          src="/91108963_1.jpg"
-          alt="Background"
-          className="absolute inset-0 w-full h-full object-cover"
-        />
+        <img src="/91108963_1.jpg" alt="Background" className="absolute inset-0 w-full h-full object-cover" />
         <div className="absolute top-20 left-20 w-32 h-32 bg-pink-200/40 rounded-full blur-xl animate-pulse"></div>
         <div className="absolute bottom-40 right-32 w-24 h-24 bg-rose-200/50 rounded-full blur-lg animate-bounce"></div>
         <div className="absolute top-1/2 left-1/3 w-16 h-16 bg-pink-300/40 rounded-full blur-md animate-pulse delay-1000"></div>
+
         <div className="relative z-20 flex flex-col justify-center items-start p-16 text-gray-800 max-w-lg">
-          {mode === LOGIN_MODE ? (
-            <>
-              <div className="w-16 h-16 bg-gradient-to-r from-pink-400 to-rose-400 rounded-2xl flex items-center justify-center mb-6 shadow-lg">
-                <Heart className="w-8 h-8 text-white" />
-              </div>
-              <h1 className="text-5xl font-bold mb-6 bg-gradient-to-r from-gray-800 to-pink-600 bg-clip-text text-transparent">
-                Kenapa Harus Elaina?
-              </h1>
-              <p className="text-xl text-gray-600 leading-relaxed">
-                Karena Elaina itu wanita yang Cantik dan Wangyyy 😘😘😘😍😍
-              </p>
-            </>
-          ) : ( // REGISTER_MODE
-            <>
-              {/* Mengembalikan style hero register ke versi awal (tanpa icon spesifik & warna hijau, mengikuti tema pink) */}
-              <div className="w-16 h-16 bg-gradient-to-r from-pink-400 to-rose-400 rounded-2xl flex items-center justify-center mb-6 shadow-lg">
-                <User className="w-8 h-8 text-white" /> {/* Atau bisa juga Heart, atau bahkan dihilangkan jika versi awal tidak ada icon */}
-              </div>
-              <h1 className="text-5xl font-bold mb-6 bg-gradient-to-r from-gray-800 to-pink-600 bg-clip-text text-transparent">
-                Join Elaina's World!
-              </h1>
-              <p className="text-xl text-gray-600 leading-relaxed">
-                Daftar sekarang dan rasakan keajaiban dunia Elaina yang penuh keindahan dan keceriaan.
-              </p>
-            </>
-          )}
+          <AnimatePresence mode="wait">
+            {mode === LOGIN_MODE ? (
+              <motion.div
+                key="login"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.3 }}
+              >
+                <div className="w-16 h-16 bg-gradient-to-r from-pink-400 to-rose-400 rounded-2xl flex items-center justify-center mb-6 shadow-lg">
+                  <Heart className="w-8 h-8 text-white" />
+                </div>
+                <h1 className="text-5xl font-bold mb-6 bg-gradient-to-r from-gray-800 to-pink-600 bg-clip-text text-transparent">
+                  Kenapa Harus Elaina?
+                </h1>
+                <p className="text-xl text-gray-600 leading-relaxed">
+                  Karena Elaina itu wanita yang Cantik dan Wangyyy 😘😘😘😍😍
+                </p>
+              </motion.div>
+            ) : (
+              <motion.div
+                key="register"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.3 }}
+              >
+                <div className="w-16 h-16 bg-gradient-to-r from-pink-400 to-rose-400 rounded-2xl flex items-center justify-center mb-6 shadow-lg">
+                  <User className="w-8 h-8 text-white" />
+                </div>
+                <h1 className="text-5xl font-bold mb-6 bg-gradient-to-r from-gray-800 to-pink-600 bg-clip-text text-transparent">
+                  Join Elaina's World!
+                </h1>
+                <p className="text-xl text-gray-600 leading-relaxed">
+                  Daftar sekarang dan rasakan keajaiban dunia Elaina yang penuh keindahan dan keceriaan.
+                </p>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
 
@@ -156,7 +147,7 @@ export default function AuthPage() {
               </div>
               {/* Register Title/Icon */}
               <div className={`absolute inset-x-0 top-0 transition-opacity duration-500 ease-in-out ${mode === REGISTER_MODE ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-                <div className="w-16 h-16 bg-gradient-to-r from-green-500 to-teal-500 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg"> {/* Different color for register */}
+                <div className="w-16 h-16 bg-gradient-to-r from-pink-500 to-rose-500 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg"> {/* Different color for register */}
                   <User className="w-8 h-8 text-white" />
                 </div>
                 <h2 className="text-3xl font-bold text-gray-800 mb-2">Create Account</h2>
