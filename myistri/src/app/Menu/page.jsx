@@ -122,7 +122,7 @@ const MenuPage = () => {
         </div>
 
         {/* Dropdown Kategori */}
-        <div className="flex justify-center mb-6">
+        <div className="flex justify-end mb-6">
           <div className="relative w-48">
             <select
               value={selectedCategory}
