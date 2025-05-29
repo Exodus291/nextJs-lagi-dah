@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { LayoutGrid, Plus, X, FolderPlus, ChevronsDown, Trash2 } from 'lucide-react';
-import api from '../../../lib/api'; // Pastikan path ini benar
+import api from '../../lib/api'; // Pastikan path ini benar
 import AddCategoryForm from '../components/AddCategory'; // Impor komponen
 
 const MenuPage = () => {

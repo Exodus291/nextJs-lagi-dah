@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Eye, EyeOff, Mail, ArrowRight, AlertCircle, Heart, User, Lock, Briefcase, UserPlus } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import api from '../../../lib/api'; // Assuming api.js is in src/lib
+import api from '../../lib/api'; // Assuming api.js is in src/lib
 
 const LOGIN_MODE = 'login';
 const REGISTER_OWNER_MODE = 'register_owner';

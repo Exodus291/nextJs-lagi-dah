@@ -3,7 +3,7 @@
 import React, { useState, useMemo } from 'react';
 import { LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
 import { TrendingUp, Users, ShoppingCart, Calendar, Download, Filter, DollarSign, Heart, ArrowUp, ArrowDown } from 'lucide-react';
-import formatRupiah from '../../../utils/rupiah';
+import formatRupiah from '../../utils/rupiah';
 
 // Sample data untuk berbagai periode
 const generateData = (days) => {

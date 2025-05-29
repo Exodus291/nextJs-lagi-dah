@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react';
-import api from '../../../lib/api'; // Pastikan path ini benar
+import api from '../../lib/api'; // Pastikan path ini benar
 import { PlusCircle, AlertCircle, CheckCircle } from 'lucide-react';
 
 export default function AddCategoryForm({ onCategoryAdded }) {
