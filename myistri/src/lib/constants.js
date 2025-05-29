@@ -1,1 +1,1 @@
-export const AUTH_TOKEN_KEY = "authToken"; // Replace with your actual cookie key
+export const AUTH_TOKEN_KEY = "token"; // Match the cookie name set by the backend

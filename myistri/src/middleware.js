@@ -7,11 +7,11 @@ export function middleware(request) {
   const path = request.nextUrl.pathname;
 
   // Define paths that don't require authentication (public routes)
-  const publicPaths = ['/login', '/register']; // Add other public paths as needed
+  const publicPaths = ['/Login', '/register']; // Add other public paths as needed
 
   if (!isLoggedIn && !publicPaths.includes(path)) {
     // Redirect to login if not logged in and not on a public route
-    return NextResponse.redirect(new URL('/login', request.url));
+    return NextResponse.redirect(new URL('/Login', request.url));
   }
 
   return NextResponse.next(); // Continue to the requested page if authenticated or on a public route

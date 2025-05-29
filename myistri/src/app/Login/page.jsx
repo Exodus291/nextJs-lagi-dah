@@ -54,11 +54,9 @@ export default function AuthPage() {
         email: formData.email,
         password: formData.password,
       });
-      // Assuming the API returns a token in response.data.token
-      if (response.data && response.data.token) {
-        localStorage.setItem('token', response.data.token);
-      }
-      console.log('Login successful:', response.data);
+      // Jika request berhasil (tidak ada error), kita asumsikan cookie HTTP-only telah di-set oleh server.
+      // Token tidak lagi diakses/disimpan secara manual di frontend.
+      console.log('Login successful, cookie should be set by the server:', response.data);
       router.push('/'); // Redirect to home or dashboard
     } catch (err) {
       setError(err.response?.data?.message || (err.response?.data?.errors && err.response.data.errors[0]?.msg) || 'Login gagal. Periksa kembali email dan password Anda.');

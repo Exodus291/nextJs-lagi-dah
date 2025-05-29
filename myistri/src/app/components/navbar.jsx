@@ -1,12 +1,15 @@
 'use client'
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Menu, X, Home, Settings, FileText, ShoppingCart, LayoutGrid, ChevronDown } from 'lucide-react';
+import api from '../../lib/api'; // Pastikan path ini benar
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState(null);
+  const router = useRouter();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -24,16 +27,29 @@ const Navbar = () => {
     setActiveDropdown(activeDropdown === dropdown ? null : dropdown);
   };
 
+  const handleLogout = async () => {
+    try {
+      await api.post('/auth/logout'); // Panggil endpoint logout di backend
+      // Backend seharusnya menghapus cookie HTTP-only
+      router.push('/Login'); // Arahkan ke halaman login
+    } catch (error) {
+      console.error('Logout failed:', error);
+      // Anda bisa menampilkan notifikasi error di sini jika diperlukan
+      // Untuk keamanan, tetap arahkan ke login meskipun ada error di backend,
+      // karena state di frontend mungkin tidak lagi valid.
+      router.push('/Login');
+    }
+  };
+
   const menuItems = [
     { name: 'Home', href: '/', icon: Home },
     { name: 'Transaksi', href: '/Transaksi', icon: ShoppingCart },
     { name: 'Menu', href: '/Menu', icon: LayoutGrid },
     { name: 'Laporan', href: '/Laporan', icon: FileText },
   ];
-
   const pengaturanItems = [
     { name: 'End Shift', href: '/' },
-    { name: 'Logout', href: '/Login' },
+    { name: 'Logout', action: handleLogout, isAction: true },
   ];
 
   return (
@@ -92,13 +108,23 @@ const Navbar = () => {
                 {activeDropdown === 'pengaturan' && (
                   <div className="absolute right-0 mt-2 w-40 bg-white rounded-lg shadow-lg z-50 py-2">
                     {pengaturanItems.map((item) => (
-                      <a
-                        key={item.name}
-                        href={item.href}
-                        className="block px-4 py-2 text-sm text-pink-700 hover:bg-pink-50 hover:text-pink-800"
-                      >
-                        {item.name}
-                      </a>
+                      item.isAction ? (
+                        <button
+                          key={item.name}
+                          onClick={item.action}
+                          className="block w-full text-left px-4 py-2 text-sm text-pink-700 hover:bg-pink-50 hover:text-pink-800"
+                        >
+                          {item.name}
+                        </button>
+                      ) : (
+                        <a
+                          key={item.name}
+                          href={item.href}
+                          className="block px-4 py-2 text-sm text-pink-700 hover:bg-pink-50 hover:text-pink-800"
+                        >
+                          {item.name}
+                        </a>
+                      )
                     ))}
                   </div>
                 )}
@@ -142,13 +168,23 @@ const Navbar = () => {
           <div className="border-t border-pink-100 mt-2 pt-2">
             <p className="px-3 text-sm text-pink-500 font-semibold mb-1">Pengaturan</p>
             {pengaturanItems.map((item) => (
-              <a
-                key={item.name}
-                href={item.href}
-                className="flex items-center px-3 py-2 rounded-lg text-pink-700 hover:bg-pink-50 hover:text-pink-800 transition-all duration-200 transform hover:scale-105"
-              >
-                <span className="font-medium">{item.name}</span>
-              </a>
+              item.isAction ? (
+                <button
+                  key={item.name}
+                  onClick={item.action}
+                  className="w-full text-left flex items-center px-3 py-2 rounded-lg text-pink-700 hover:bg-pink-50 hover:text-pink-800 transition-all duration-200 transform hover:scale-105"
+                >
+                  <span className="font-medium">{item.name}</span>
+                </button>
+              ) : (
+                <a
+                  key={item.name}
+                  href={item.href}
+                  className="flex items-center px-3 py-2 rounded-lg text-pink-700 hover:bg-pink-50 hover:text-pink-800 transition-all duration-200 transform hover:scale-105"
+                >
+                  <span className="font-medium">{item.name}</span>
+                </a>
+              )
             ))}
           </div>
         </div>
