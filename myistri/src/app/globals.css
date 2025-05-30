@@ -4,3 +4,19 @@
   --background: #ffffff;
   --foreground: #ffffff;
 }
+
+/* Sembunyikan ikon mata bawaan di Edge dan IE */
+input[type="password"]::-ms-reveal {
+  display: none;
+}
+
+/* Sembunyikan ikon mata bawaan di Chrome, Safari, Opera (berbasis WebKit) */
+input[type="password"]::-webkit-reveal,
+input[type="password"]::-webkit-clear-button {
+  display: none !important; /* Terkadang perlu !important untuk WebKit */
+  -webkit-appearance: none;
+}
+
+/* Untuk Firefox, biasanya tidak ada ikon mata bawaan yang bisa di-style seperti ini,
+   jadi biasanya tidak perlu CSS khusus. Firefox lebih mengandalkan add-on atau
+   pengaturan browser untuk fungsionalitas serupa. */

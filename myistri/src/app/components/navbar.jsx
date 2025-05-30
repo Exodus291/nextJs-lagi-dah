@@ -48,6 +48,7 @@ const Navbar = () => {
     { name: 'Laporan', href: '/Laporan', icon: FileText },
   ];
   const pengaturanItems = [
+    { name: 'Profil', href: '/Profil' },
     { name: 'End Shift', href: '/' },
     { name: 'Logout', action: handleLogout, isAction: true },
   ];
@@ -94,7 +95,7 @@ const Navbar = () => {
               {/* Dropdown Pengaturan */}
               <div className="relative">
                 <button
-                  onClick={() => toggleDropdown('pengaturan')}
+                  onClick={() => toggleDropdown('Profil')}
                   className={`px-4 py-2 rounded-lg text-sm font-medium flex items-center space-x-2 transition-all duration-200 hover:scale-105 ${
                     isScrolled
                       ? 'text-pink-700 hover:bg-pink-50 hover:text-pink-800'

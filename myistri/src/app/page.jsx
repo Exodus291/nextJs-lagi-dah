@@ -1,13 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react';
 
-const mockMenus = [
-  { id: 1, name: 'Nasi Goreng', price: 15000 },
-  { id: 2, name: 'Mie Ayam', price: 12000 },
-  { id: 3, name: 'Es Teh', price: 5000 },
-  { id: 4, name: 'Soto Ayam', price: 17000 },
-  { id: 5, name: 'Ayam Bakar', price: 20000 },
-];
 
 export default function Home() {
   const [customerName, setCustomerName] = useState('');
