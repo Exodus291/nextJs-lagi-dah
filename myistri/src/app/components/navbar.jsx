@@ -64,12 +64,12 @@ const Navbar = () => {
           <div className="flex-shrink-0 flex items-center">
             <div className="flex items-center space-x-2">
               <div className="w-8 h-8 bg-gradient-to-br from-pink-500 to-rose-400 rounded-lg flex items-center justify-center shadow-lg transform hover:scale-110 transition-transform duration-200">
-                <span className="text-white font-bold text-sm">P</span>
+                <span className="text-white font-bold text-sm">❤️</span>
               </div>
               <span className={`font-bold text-xl transition-colors duration-300 ${
                 isScrolled ? 'text-pink-600' : 'text-white'
               }`}>
-                POS App
+                MyIstri
               </span>
             </div>
           </div>
