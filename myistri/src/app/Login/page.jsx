@@ -1,9 +1,11 @@
 'use client'
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { AnimatePresence } from 'framer-motion';
 import HeroSection from '../components/heroSecction';
 import FormLogin from '../components/FormLogin';
+import ToastNotification from '../components/toastNotif';
 import api from '../../lib/api'; 
 
 const LOGIN_MODE = 'login';
@@ -26,6 +28,7 @@ export default function AuthPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [toast, setToast] = useState({ message: '', type: 'info', id: null });
   const router = useRouter();
 
   const switchModeHandler = (newMode) => {
@@ -35,6 +38,14 @@ export default function AuthPage() {
     setFormData(initialFormState);
     setShowPassword(false);
     setShowConfirmPassword(false);
+  };
+
+  const showToast = (message, type = 'success') => {
+    setToast({ message, type, id: Date.now() }); // Gunakan Date.now() untuk key unik
+  };
+
+  const clearToast = () => {
+    setToast({ message: '', type: 'info', id: null });
   };
 
   const handleChange = (e) => {
@@ -80,7 +91,7 @@ export default function AuthPage() {
         store: formData.store,
         password: formData.password,
       });
-      alert('Registrasi Owner berhasil! Silakan login.');
+      showToast('Registrasi Owner berhasil! Silakan login.', 'success');
       switchModeHandler(LOGIN_MODE);
     } catch (err) {
       setError(err.response?.data?.message || (err.response?.data?.errors && err.response.data.errors[0]?.msg) || 'Registrasi Owner gagal. Coba lagi.');
@@ -106,7 +117,7 @@ export default function AuthPage() {
         password: formData.password,
         referralCode: formData.referralCode,
       });
-      alert('Registrasi Staff berhasil! Silakan login.');
+      showToast('Registrasi Staff berhasil! Silakan login.', 'success');
       switchModeHandler(LOGIN_MODE);
     } catch (err) {
       setError(err.response?.data?.message || (err.response?.data?.errors && err.response.data.errors[0]?.msg) || 'Registrasi Staff gagal. Coba lagi.');
@@ -142,6 +153,17 @@ export default function AuthPage() {
         onTogglePassword={() => setShowPassword(!showPassword)}
         onToggleConfirmPassword={() => setShowConfirmPassword(!showConfirmPassword)}
       />
+      <AnimatePresence>
+        {toast.message && toast.id && (
+          <ToastNotification
+            key={toast.id}
+            message={toast.message}
+            type={toast.type}
+            onDismiss={clearToast}
+            duration={3000}// duration defaultnya 5 detik, bisa di-override di sini jika perlu
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
