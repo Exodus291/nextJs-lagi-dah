@@ -1,6 +1,6 @@
 'use client'
 
-import { Eye, EyeOff, Mail, User, Lock, UserPlus } from 'lucide-react';
+import { Eye, EyeOff, Mail, User, Lock, UserPlus, Store } from 'lucide-react';
 
 const LOGIN_MODE = 'login';
 const REGISTER_OWNER_MODE = 'register_owner';
@@ -28,6 +28,18 @@ export default function InputLogin({
           value={isRegisterMode ? formData.name : ''}
           onChange={onChange}
           placeholder="Full Name"
+        />
+      </AnimatedField>
+
+      {/* Store Name Field */}
+      <AnimatedField show={mode === REGISTER_OWNER_MODE}>
+        <InputField
+          icon={Store}
+          type="text"
+          name="storeName"
+          value={mode === REGISTER_OWNER_MODE ? formData.storeName : ''}
+          onChange={onChange}
+          placeholder="Nama Toko"
         />
       </AnimatedField>
 
