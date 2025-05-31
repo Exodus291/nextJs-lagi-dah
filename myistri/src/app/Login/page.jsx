@@ -15,7 +15,7 @@ const initialFormState = {
   email: '',
   password: '',
   confirmPassword: '',
-  storeName: '',
+  store: '',
   referralCode: '',
 };
 
@@ -65,7 +65,7 @@ export default function AuthPage() {
 
   const handleRegisterOwnerSubmit = async () => {
     if (!formData.name.trim()) return setError('Nama wajib diisi.');
-    if (!formData.storeName.trim()) return setError('Nama toko wajib diisi.');
+    if (!formData.store.trim()) return setError('Nama toko wajib diisi.');
     if (!formData.email.trim()) return setError('Email wajib diisi.');
     if (!formData.password) return setError('Password wajib diisi.');
     if (formData.password.length < 6) return setError('Password minimal 6 karakter.');
@@ -77,7 +77,7 @@ export default function AuthPage() {
       await api.post('/auth/register/owner', {
         name: formData.name,
         email: formData.email,
-        storeName: formData.storeName,
+        store: formData.store,
         password: formData.password,
       });
       alert('Registrasi Owner berhasil! Silakan login.');

@@ -36,8 +36,8 @@ export default function InputLogin({
         <InputField
           icon={Store}
           type="text"
-          name="storeName"
-          value={mode === REGISTER_OWNER_MODE ? formData.storeName : ''}
+          name="store"
+          value={mode === REGISTER_OWNER_MODE ? formData.store : ''}
           onChange={onChange}
           placeholder="Nama Toko"
         />
