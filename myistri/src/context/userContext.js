@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useState, useEffect, useCallback, useContext, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import api from '@/lib/api'; // Pastikan path ini benar, sesuaikan jika perlu
 import { AUTH_TOKEN_KEY } from '@/lib/constants';
 
@@ -14,20 +14,14 @@ export const UserProvider = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const router = useRouter();
+  const pathname = usePathname();
 
   const fetchUserProfile = useCallback(async () => {
-
-    const tokenExists = !!document.cookie.includes(`${AUTH_TOKEN_KEY}`);
-
-    if (!tokenExists) {
-        setUserData(null);
-        setIsLoading(false);
-        setError(null);
-        return;
-    }
-
     setIsLoading(true);
     setError(null);
+    // Kita akan selalu mencoba mengambil profil.
+    // Jika cookie HttpOnly yang valid ada, browser akan mengirimkannya secara otomatis
+    // karena `withCredentials: true` di api.js.
     try {
       const response = await api.get('/auth/profile');
       const userProfile = response.data.user;
@@ -35,25 +29,35 @@ export const UserProvider = ({ children }) => {
         // Anda bisa memilih untuk throw error atau set error state dengan pesan spesifik
         console.warn("User data not found in response for context");
         setUserData(null); // Atau set ke state default jika ada
-        // setError("User data not found"); // Opsional, tergantung bagaimana Anda ingin menangani ini
       } else {
         setUserData(userProfile);
       }
     } catch (err) {
-      console.error('Failed to fetch user profile for context:', err);
-      setError(err.message || 'Failed to load user data');
       setUserData(null); // Pastikan userData null jika ada error
+
       if (err.response?.status === 401) {
-        router.push('/Login'); // Redirect jika tidak terautentikasi
+        // Untuk 401, berarti tidak terautentikasi. Jangan set pesan error umum.
+        // Middleware seharusnya menangani akses tidak sah ke rute yang dilindungi.
+        // Redirect ini adalah fallback atau untuk kasus di mana state sisi klien perlu memaksanya.
+        // Pesan ini hanya untuk debugging internal jika diperlukan, bukan untuk console.error publik.
+        // console.log('UserProvider: Not authenticated (401). User data set to null.');
+        if (pathname !== '/Login' && pathname !== '/Register') {
+          router.push('/Login');
+        }
+      } else {
+        // Untuk error lain (jaringan, server 500, dll.), set pesan error.
+        // Dan log error ini karena ini adalah error yang tidak diharapkan.
+        console.error('Failed to fetch user profile for context (non-401 error):', err);
+        setError(err.message || 'Failed to load user data');
       }
     } finally {
       setIsLoading(false);
     }
-  }, [router]);
+  }, [router, pathname]);
 
   useEffect(() => {
     fetchUserProfile();
-  }, [fetchUserProfile]);
+  }, [fetchUserProfile]); // useEffect berjalan ketika identitas fetchUserProfile berubah.
 
   // Gunakan useMemo untuk value agar tidak menyebabkan re-render yang tidak perlu
   const value = useMemo(() => ({

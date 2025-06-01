@@ -594,7 +594,7 @@ return (
                       <Building className="w-5 h-5 text-pink-500 mr-3 mt-0.5 flex-shrink-0" />
                       <div>
                         <p className="text-xs text-pink-600 font-medium">Toko</p>
-                        <span className="text-gray-700">{profileData.store}</span>
+                        <span className="text-gray-700">{profileData.store.name}</span>
                       </div>
                     </div>
                   )}
