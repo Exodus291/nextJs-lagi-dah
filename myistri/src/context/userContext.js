@@ -3,6 +3,7 @@
 import React, { createContext, useState, useEffect, useCallback, useContext, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import api from '@/lib/api'; // Pastikan path ini benar, sesuaikan jika perlu
+import { AUTH_TOKEN_KEY } from '@/lib/constants';
 
 // 1. Membuat Context
 const UserContext = createContext(null);
@@ -15,6 +16,16 @@ export const UserProvider = ({ children }) => {
   const router = useRouter();
 
   const fetchUserProfile = useCallback(async () => {
+
+    const tokenExists = !!document.cookie.includes(`${AUTH_TOKEN_KEY}`);
+
+    if (!tokenExists) {
+        setUserData(null);
+        setIsLoading(false);
+        setError(null);
+        return;
+    }
+
     setIsLoading(true);
     setError(null);
     try {
