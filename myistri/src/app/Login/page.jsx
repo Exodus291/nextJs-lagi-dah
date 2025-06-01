@@ -88,7 +88,7 @@ export default function AuthPage() {
       await api.post('/auth/register/owner', {
         name: formData.name,
         email: formData.email,
-        store: formData.store,
+        storeName: formData.store,
         password: formData.password,
       });
       showToast('Registrasi Owner berhasil! Silakan login.', 'success');
