@@ -3,59 +3,10 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Menu, X, Home, Settings, FileText, ShoppingCart, LayoutGrid, ChevronDown, User, LogOut, Clock } from 'lucide-react';
-import api from '../../lib/api';
+import api from '../../lib/api'; // Tetap dibutuhkan untuk logout
+import { useUser } from '@/context/userContext'; // 1. Impor useUser
 
 const ASSET_SERVER_URL = process.env.NEXT_PUBLIC_ASSET_SERVER_URL;
-
-// Custom hook for user data management
-const useUserData = () => {
-  const [userData, setUserData] = useState({
-    name: '',
-    avatarUrl: null,
-    avatarInitial: '',
-    isLoading: true,
-    error: null
-  });
-  const router = useRouter();
-
-  const fetchUserProfile = useCallback(async () => {
-    try {
-      const response = await api.get('/auth/profile');
-      const userProfile = response.data.user;
-      
-      if (!userProfile) {
-        throw new Error("User data not found in response");
-      }
-      
-      setUserData({
-        name: userProfile.name || 'Pengguna',
-        avatarUrl: userProfile.profilePictureUrl || null,
-        avatarInitial: (userProfile.name || 'P').charAt(0).toUpperCase(),
-        isLoading: false,
-        error: null
-      });
-    } catch (error) {
-      console.error('Failed to fetch user profile:', error);
-      setUserData(prev => ({
-        ...prev,
-        name: 'Gagal memuat',
-        avatarInitial: '!',
-        isLoading: false,
-        error: error.message
-      }));
-      
-      if (error.response?.status === 401) {
-        router.push('/Login');
-      }
-    }
-  }, [router]);
-
-  useEffect(() => {
-    fetchUserProfile();
-  }, [fetchUserProfile]);
-
-  return { userData, refetchUserData: fetchUserProfile };
-};
 
 // Custom hook for scroll detection
 const useScrollDetection = (threshold = 20) => {
@@ -100,19 +51,24 @@ const useOutsideClick = (callback) => {
 };
 
 // Avatar component
-const Avatar = ({ userData, resolvedAvatarUrl, size = 'w-7 h-7', className = '' }) => {
+const Avatar = ({ userContextData, resolvedAvatarUrl, size = 'w-7 h-7', className = '' }) => { // Ganti userData menjadi userContextData
   const [imageError, setImageError] = useState(false);
 
   const handleImageError = useCallback(() => {
     setImageError(true);
   }, []);
 
+  // Ambil isLoading dan name dari userContextData
+  const isLoading = userContextData?.isLoading;
+  const name = userContextData?.userData?.name || 'Pengguna';
+  const avatarInitial = (name || 'U').charAt(0).toUpperCase();
+
   useEffect(() => {
     // Reset imageError when resolvedAvatarUrl changes (e.g., user uploads a new pic)
     setImageError(false);
   }, [resolvedAvatarUrl]);
 
-  if (userData.isLoading) {
+  if (isLoading) {
     return (
       <div className={`${size} bg-gray-200 rounded-full animate-pulse ${className}`} />
     );
@@ -123,13 +79,13 @@ const Avatar = ({ userData, resolvedAvatarUrl, size = 'w-7 h-7', className = '' 
       {resolvedAvatarUrl && !imageError ? (
         <img 
           src={resolvedAvatarUrl} 
-          alt={userData.name}
+          alt={name}
           className="w-full h-full object-cover"
           onError={handleImageError}
           loading="lazy"
         />
       ) : (
-        userData.avatarInitial || 'U'
+        avatarInitial
       )}
     </div>
   );
@@ -145,8 +101,10 @@ const Navbar = () => {
   const [activeDropdown, setActiveDropdown] = useState(null);
   const [hasMounted, setHasMounted] = useState(false);
   const router = useRouter();
-  
-  const { userData, refetchUserData } = useUserData();
+
+  // 2. Gunakan useUser dari Context
+  const { userData: contextUserData, isLoading: userIsLoading, error: userError, refetchUserProfile } = useUser();
+
   const isScrolled = useScrollDetection(20);
   
   const dropdownRef = useOutsideClick(() => setActiveDropdown(null));
@@ -174,7 +132,10 @@ const Navbar = () => {
   }, [router]);
 
   const resolvedAvatarUrl = useMemo(() => {
-    const path = userData.avatarUrl;
+    // 3. Gunakan contextUserData
+    if (userIsLoading || !contextUserData) return null;
+
+    const path = contextUserData.profilePictureUrl;
 
     if (!path) return null;
 
@@ -198,7 +159,7 @@ const Navbar = () => {
     }
     
     return path; // Fallback for non-standard paths, or could be default image
-  }, [userData.avatarUrl]);
+  }, [contextUserData, userIsLoading]);
 
   const menuItems = useMemo(() => [
     { name: 'Home', href: '/', icon: Home },
@@ -213,7 +174,7 @@ const Navbar = () => {
       type: 'profile',
       href: '/Account',
       icon: User,
-      name: userData.name || 'Profile'
+      name: userIsLoading ? 'Loading...' : (contextUserData?.name || 'Profile') // 3. Gunakan contextUserData
     },
     { 
       id: 'endShift', 
@@ -229,7 +190,7 @@ const Navbar = () => {
       type: 'action',
       icon: LogOut
     },
-  ], [userData.name, handleLogout]);
+  ], [contextUserData, userIsLoading, handleLogout]); // 3. Tambahkan dependensi
 
   const navClasses = `fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
     isScrolled
@@ -295,13 +256,13 @@ const Navbar = () => {
                   aria-label="User menu"
                   id="user-menu-button"
                 >
-                  <Avatar userData={userData} resolvedAvatarUrl={resolvedAvatarUrl} />
+                  <Avatar userContextData={{userData: contextUserData, isLoading: userIsLoading}} resolvedAvatarUrl={resolvedAvatarUrl} /> {/* 3. Kirim data yang sesuai ke Avatar */}
                   
-                  {userData.isLoading ? (
+                  {userIsLoading ? ( // 3. Gunakan userIsLoading
                     <LoadingSkeleton width="w-20" height="h-5" />
                   ) : (
                     <span className="max-w-[120px] truncate"> {/* max-w increased slightly */}
-                      {userData.name.split(' ')[0]}
+                      {contextUserData?.name?.split(' ')[0] || 'User'} {/* 3. Gunakan contextUserData */}
                     </span>
                   )}
                   
@@ -334,13 +295,13 @@ const Navbar = () => {
                             onClick={() => setActiveDropdown(null)}
                           >
                             <Avatar 
-                              userData={userData} 
+                              userContextData={{userData: contextUserData, isLoading: userIsLoading}} // 3. Kirim data yang sesuai ke Avatar
                               resolvedAvatarUrl={resolvedAvatarUrl} 
                               size="w-8 h-8"
                               className="mr-3"
                             />
                             <span className="font-medium truncate">
-                              {userData.isLoading ? 'Loading...' : userData.name}
+                              {userIsLoading ? 'Loading...' : contextUserData?.name} {/* 3. Gunakan contextUserData */}
                             </span>
                           </a>
                         );
@@ -434,13 +395,13 @@ const Navbar = () => {
                     onClick={() => setIsOpen(false)}
                   >
                     <Avatar 
-                      userData={userData} 
+                      userContextData={{userData: contextUserData, isLoading: userIsLoading}} // 3. Kirim data yang sesuai ke Avatar
                       resolvedAvatarUrl={resolvedAvatarUrl} 
                       size="w-8 h-8" 
                       className="mr-3"
                     />
                     <span className="font-medium truncate">
-                      {userData.isLoading ? 'Loading...' : userData.name}
+                      {userIsLoading ? 'Loading...' : contextUserData?.name} {/* 3. Gunakan contextUserData */}
                     </span>
                   </a>
                 );

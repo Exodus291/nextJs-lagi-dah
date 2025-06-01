@@ -2,15 +2,17 @@
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { User, Calendar, Mail, Edit3, Save, XCircle, UploadCloud, Camera, Building, UserCheck, Gift, Share2, Info } from 'lucide-react';
+import { useUser } from '@/context/userContext'; // 1. Impor useUser
 import api from '@/lib/api'; // Pastikan path ini benar
 
 
 const ASSET_SERVER_URL = process.env.NEXT_PUBLIC_ASSET_SERVER_URL;
 
 export default function ProfilePage() {
-  const [profileData, setProfileData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  // 2. Gunakan data dari context
+  const { userData: contextProfileData, isLoading: contextIsLoading, error: contextError, refetchUserProfile } = useUser();
+  // State lokal untuk profileData agar bisa diupdate optimistik atau jika ada perbedaan struktur, dan untuk form
+  const [profileData, setProfileData] = useState(contextProfileData); // Inisialisasi dengan data context
 
   const [isEditingText, setIsEditingText] = useState(false);
   const [editForm, setEditForm] = useState({
@@ -36,27 +38,21 @@ export default function ProfilePage() {
   const profilePicOptionsRef = useRef(null);
 
   useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        setLoading(true);
-        setError('');
-        const response = await api.get('/auth/profile');
-        const userData = response.data.user;
-        setProfileData(userData);
+    // 3. Sinkronkan profileData lokal dengan data dari context ketika context berubah
+    // Ini juga akan menangani pembaruan setelah refetchUserProfile dipanggil
+    if (contextProfileData) {
+      setProfileData(contextProfileData);
+      if (!isEditingText) { // Hanya update form jika tidak sedang diedit, untuk menghindari kehilangan input pengguna
         setEditForm({
-          name: userData.name || '',
-          bio: userData.bio || '',
+          name: contextProfileData.name || '',
+          bio: contextProfileData.bio || '',
         });
-      } catch (err) {
-        console.error("Error fetching profile:", err);
-        setError(err.response?.data?.message || "Gagal memuat data profil. Silakan coba lagi.");
-      } finally {
-        setLoading(false);
       }
-    };
+    }
+  }, [contextProfileData, isEditingText]);
 
-    fetchProfile();
-  }, []);
+  const loading = contextIsLoading; // 4. Gunakan status loading dari context
+  const error = contextError; // 4. Gunakan status error dari context
 
   const handleStartEditText = () => {
     if (profileData) {
@@ -100,7 +96,8 @@ export default function ProfilePage() {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       if (response.data && response.data.user) {
-        setProfileData(prev => ({ ...prev, ...response.data.user }));
+        // setProfileData(prev => ({ ...prev, ...response.data.user })); // Tidak perlu lagi, context akan handle
+        refetchUserProfile(); // 5. Panggil refetch dari context
         // Pratinjau sudah diatur oleh handleEditFormChange
       }
       setSelectedFile(null); // Kosongkan setelah berhasil diunggah
@@ -125,7 +122,8 @@ export default function ProfilePage() {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       if (response.data && response.data.user) {
-        setProfileData(prev => ({ ...prev, ...response.data.user }));
+        // setProfileData(prev => ({ ...prev, ...response.data.user })); // Tidak perlu lagi
+        refetchUserProfile(); // 5. Panggil refetch dari context
       }
       setSelectedCoverFile(null); // Kosongkan setelah berhasil diunggah
     } catch (err) {
@@ -196,7 +194,8 @@ export default function ProfilePage() {
       try {
         const response = await api.put('/auth/profile/picture', deleteFormData);
         if (response.data && response.data.user) {
-          setProfileData(prev => ({ ...prev, ...response.data.user }));
+          // setProfileData(prev => ({ ...prev, ...response.data.user })); // Tidak perlu lagi
+          refetchUserProfile(); // 5. Panggil refetch dari context
            // Jika backend mengembalikan URL null atau tidak ada, frontend akan menampilkan default
           if (!response.data.user.profilePictureUrl) {
             setImagePreview("https://images.unsplash.com/photo-1494790108355-2616b612b786?w=150&h=150&fit=crop&crop=face");
@@ -250,7 +249,8 @@ export default function ProfilePage() {
         try {
           const response = await api.put('/auth/profile', textPayload);
           if (response.data && response.data.user) {
-            setProfileData(prev => ({ ...prev, ...response.data.user }));
+            // setProfileData(prev => ({ ...prev, ...response.data.user })); // Tidak perlu lagi
+            refetchUserProfile(); // 5. Panggil refetch dari context
           }
           setIsEditingText(false);
         } catch (err) {
