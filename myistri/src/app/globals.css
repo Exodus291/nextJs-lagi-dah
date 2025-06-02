@@ -20,3 +20,19 @@ input[type="password"]::-webkit-clear-button {
 /* Untuk Firefox, biasanya tidak ada ikon mata bawaan yang bisa di-style seperti ini,
    jadi biasanya tidak perlu CSS khusus. Firefox lebih mengandalkan add-on atau
    pengaturan browser untuk fungsionalitas serupa. */
+@layer utilities {
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: #f1f1f1; 
+    border-radius: 10px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #fda4af; 
+    border-radius: 10px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #f472b6; 
+  }
+}
