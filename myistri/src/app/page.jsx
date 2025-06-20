@@ -1,10 +1,16 @@
 'use client'
 import { useState, useEffect, useRef } from 'react';
 import { AnimatePresence } from 'framer-motion';
-import ToastNotification from './components/toastNotif'; // Sesuaikan path jika perlu
+import ToastNotification from './components/toastNotif';
 import { X as XIcon, Search as SearchIcon, Trash2 } from 'lucide-react';
-import api from '@/lib/api'; // Impor instance API
+import api from '@/lib/api';
+import { printReceipt } from '@/utils/printReceipt'; // Impor fungsi printReceipt
 
+// Define payment methods as a constant outside the component
+const PAYMENT_METHODS = [
+  { id: 'cash', name: 'Tunai (Cash)' },
+  { id: 'qris', name: 'QRIS' },
+];
 
 export default function Home() {
   const [customerName, setCustomerName] = useState('');
@@ -18,11 +24,7 @@ export default function Home() {
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState(null);
   
-  // State untuk metode pembayaran dan proses pesanan
-  const [paymentMethods] = useState([
-    { id: 'cash', name: 'Tunai (Cash)' },
-    { id: 'qris', name: 'QRIS' },
-  ]);
+  // State untuk metode pembayaran dan proses pesanan (paymentMethods moved to constant)
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('');
   const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
   // const [submitOrderStatus, setSubmitOrderStatus] = useState({ message: '', type: '' }); // Diganti dengan toast
@@ -159,52 +161,45 @@ export default function Home() {
     }
 
     setIsSubmittingOrder(true);
-    // setShowFullScreenLoader(true); // Dihapus
-    // setSubmitOrderStatus({ message: '', type: '' }); // Dihapus
 
     const orderData = {
-      // customerName and notes are now part of the first transactionItem if provided
-      transactionItems: selectedItems.map((item, index) => {
-        const transactionItem = {
-          menuId: item.id,
-          quantity: item.qty,
-          priceAtTransaction: Number(item.price).toFixed(2), // Format as string with 2 decimal places
-        };
-
-        // Add customerName and customerNote only to the first item, if they exist
-        if (index === 0) {
-          const globalCustomerName = customerName.trim();
-          const globalCustomerNote = customerNote.trim();
-          if (globalCustomerName) {
-            transactionItem.customerName = globalCustomerName;
-          }
-          if (globalCustomerNote) {
-            transactionItem.customerNote = globalCustomerNote;
-          }
-        }
-        return transactionItem;
-      }),
+      customerName: customerName.trim(),
+      customerNote: customerNote.trim(),
+      transactionItems: selectedItems.map(item => ({
+      menuId: item.id,
+      menuName: item.name,
+      quantity: item.qty,
+      priceAtTransaction: Number(item.price)
+      })),
       totalAmount: totalPrice,
-      paymentMethod: selectedPaymentMethod || null, // Kirim null jika tidak ada metode pembayaran dipilih
-      status: selectedPaymentMethod ? 'COMPLETED' : 'PENDING' // Atur status berdasarkan pilihan metode pembayaran
+      paymentMethod: selectedPaymentMethod || null,
+      status: selectedPaymentMethod ? 'COMPLETED' : 'PENDING'
     };
-
+    console.log('Order Data:', orderData); // Debugging log
     try {
       const response = await api.post('/transactions', orderData); 
+      
+      // Print receipt if payment method is selected
+      if (selectedPaymentMethod) {
+        printReceipt({
+          ...orderData,
+          id: response.data?.transaction?.id || 'UNKNOWN'
+        });
+      }
+      
       showToast(`Pesanan berhasil dibuat! ID Transaksi: ${response.data?.transaction?.id || ''}`, 'success');
-      // Reset form setelah berhasil
+      
+      // Reset form
       setCustomerName('');
       setCustomerNote('');
       setSelectedItems([]);
       setSearchTerm('');
       setSelectedPaymentMethod('');
-      // Mungkin redirect atau tindakan lain
     } catch (error) {
       console.error('Error processing order:', error);
       showToast(error.response?.data?.message || 'Gagal memproses pesanan. Coba lagi.', 'error');
     } finally {
       setIsSubmittingOrder(false);
-      // setShowFullScreenLoader(false); // Dihapus
     }
   };
 
@@ -395,7 +390,7 @@ export default function Home() {
                 Metode Pembayaran
               </h3>
               <div className="space-y-2 mb-6">
-                {paymentMethods.map((method) => (
+                {PAYMENT_METHODS.map((method) => (
                   <label
                     key={method.id}
                     className={`flex items-center p-3 border rounded-lg cursor-pointer transition-all duration-200 ${
