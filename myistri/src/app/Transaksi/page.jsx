@@ -71,8 +71,9 @@ const TransactionsPage = () => {
         {!loading && !error && transactions.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
             {transactions.map((tx) => {
-              const customerName = tx.transactionItems?.[0]?.customerName || 'Tidak ada';
-              const customerNote = tx.transactionItems?.[0]?.customerNote || 'Tidak ada';
+              // console.log('TX:', tx);
+              const customerName = tx.customerName || 'Tidak ada';
+              const customerNote = tx.customerNote || 'Tidak ada';
 
               return (
                 <div

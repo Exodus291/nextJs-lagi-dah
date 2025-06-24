@@ -4,36 +4,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
 import { TrendingUp, Users, ShoppingCart, Calendar, Download, Filter, DollarSign, Heart, ArrowUp, ArrowDown } from 'lucide-react';
 import formatRupiah from '../../utils/rupiah';
-
-// Sample data untuk berbagai periode
-const generateData = (days) => {
-  const data = [];
-  const baseRevenue = 50000;
-  const baseCustomers = 100;
-  const baseTransactions = 80;
-  
-  for (let i = 0; i < days; i++) {
-    const date = new Date();
-    date.setDate(date.getDate() - (days - 1 - i));
-    
-    const dayOfWeek = date.getDay();
-    const weekendMultiplier = dayOfWeek === 0 || dayOfWeek === 6 ? 1.3 : 1;
-    const randomFactor = 0.7 + Math.random() * 0.6;
-    
-    data.push({
-      date: date.toLocaleDateString('id-ID', { 
-        day: '2-digit', 
-        month: 'short',
-        year: days > 31 ? '2-digit' : undefined 
-      }),
-      fullDate: date.toISOString().split('T')[0],
-      pendapatan: Math.round(baseRevenue * weekendMultiplier * randomFactor),
-      pelanggan: Math.round(baseCustomers * weekendMultiplier * randomFactor),
-      transaksi: Math.round(baseTransactions * weekendMultiplier * randomFactor),
-    });
-  }
-  return data;
-};
+import api from '@/lib/api';
 
 const periods = {
   '7': { label: 'Minggu Ini', days: 7 },
@@ -41,49 +12,86 @@ const periods = {
   '90': { label: '3 Bulan', days: 90 }
 };
 
-// Data kategori penjualan
-const categoryData = [
-  { name: 'Makanan', value: 45, color: '#ec4899' },
-  { name: 'Minuman', value: 30, color: '#f43f5e' },
-  { name: 'Lainnya', value: 10, color: '#a855f7' }
-];
-
 export default function LaporanPOSPage() {
   const [isClient, setIsClient] = useState(false);
   const [selectedPeriod, setSelectedPeriod] = useState('30');
   const [activeChart, setActiveChart] = useState('pendapatan');
-  
+  const [data, setData] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
   useEffect(() => {
     setIsClient(true);
   }, []);
-  
-  const data = useMemo(() => {
-    if (!isClient) return []; // Return empty array during SSR or before client mount
-    return generateData(periods[selectedPeriod].days);
-  }, [selectedPeriod, isClient]);
-  
-  // Calculate totals and averages
-  const totals = useMemo(() => {
-    const totalPendapatan = data.reduce((sum, item) => sum + item.pendapatan, 0);
-    const totalPelanggan = data.reduce((sum, item) => sum + item.pelanggan, 0);
-    const totalTransaksi = data.reduce((sum, item) => sum + item.transaksi, 0);
-    
-    if (!isClient || data.length === 0) {
-      return {
-        totalPendapatan: 0,
-        totalPelanggan: 0,
-        totalTransaksi: 0,
-        avgTransaksi: 0,
-      };
-    }
-    return {
-      totalPendapatan,
-      totalPelanggan,
-      totalTransaksi,
-      avgTransaksi: totalTransaksi > 0 ? totalPendapatan / totalTransaksi : 0,
-    };
-  }, [data, isClient]);
 
+  useEffect(() => {
+    if (!isClient) return;
+    setLoading(true);
+    setError(null);
+    api(`/reports/sales?days=${periods[selectedPeriod].days}`)
+      .then(json => {
+        console.log('API Response:', json);
+        setData(json.data); // Ambil hanya bagian data dari response
+        setLoading(false);
+      })
+      .catch(err => {
+        setError(err.message || 'Gagal mengambil data laporan');
+        setLoading(false);
+      });
+  }, [selectedPeriod, isClient]);
+
+  // Mapping data API ke variabel yang digunakan di komponen
+  const safeData = (data && typeof data === 'object') ? data : {};
+  const totalPendapatan = safeData.totalSales || 0;
+  const totalPelanggan = safeData.totalTransactions || 0;
+  const totalTransaksi = safeData.totalTransactions || 0;
+  const totalBarangTerjual = safeData.totalItemsSold || 0;
+  const avgTransaksi = totalTransaksi > 0 ? totalPendapatan / totalTransaksi : 0;
+  const trenData = safeData.menuSalesSummary ? Object.entries(safeData.menuSalesSummary).map(([key, value]) => ({
+    name: key,
+    ...value
+  })) : [];
+  const storeName = safeData.storeName || '';
+  const reportDate = safeData.reportDate || '';
+
+  // Calculate totals and averages
+  const totals = useMemo(() => ({
+    totalPendapatan,
+    totalPelanggan,
+    totalTransaksi,
+    avgTransaksi,
+    totalBarangTerjual
+  }), [data, isClient]);
+
+  // Ambil data kategori dari API, dan beri warna default jika tidak ada
+  const categoryColors = [
+    '#ec4899', // pink
+    '#f43f5e', // rose
+    '#a855f7', // purple
+    '#f59e42', // orange
+    '#38bdf8', // blue
+    '#22d3ee', // cyan
+    '#10b981', // green
+    '#fbbf24', // yellow
+    '#6366f1', // indigo
+    '#eab308', // gold
+  ];
+  const categoryData = useMemo(() => {
+    if (!data.categorySalesSummary) return [];
+    // Jika API mengembalikan array, gunakan langsung, jika object, ubah ke array
+    let arr = Array.isArray(data.categorySalesSummary)
+      ? data.categorySalesSummary
+      : Object.entries(data.categorySalesSummary).map(([name, value], idx) => ({
+          name,
+          value: value.percent || value.value || value, // gunakan percent/value
+        }));
+    // Tambahkan warna
+    return arr.map((item, idx) => ({
+      ...item,
+      color: item.color || categoryColors[idx % categoryColors.length],
+      value: Number(item.value) || 0,
+    }));
+  }, [data]);
 
   const StatCard = ({ title, value, icon: Icon, trend, trendValue, color = "pink" }) => {
     const colorClasses = {
@@ -124,9 +132,10 @@ export default function LaporanPOSPage() {
             </div>
             <div>
               <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-800 to-pink-600 bg-clip-text text-transparent">
-                Laporan Elaina
+                Laporan {storeName ? storeName : 'Elaina'}
               </h1>
               <p className="text-gray-600">Dashboard analytics untuk performa bisnis Anda</p>
+              {reportDate && <p className="text-xs text-gray-400">Tanggal Laporan: {reportDate}</p>}
             </div>
           </div>
           
@@ -158,13 +167,17 @@ export default function LaporanPOSPage() {
           </div>
         </div>
 
-        {!isClient && (
+        {(!isClient || loading) && (
           <div className="text-center py-10">
             <p className="text-xl text-pink-600 animate-pulse">Memuat data laporan...</p>
           </div>
         )}
-
-        {isClient && (
+        {error && (
+          <div className="text-center py-10">
+            <p className="text-xl text-red-600">{error}</p>
+          </div>
+        )}
+        {isClient && !loading && !error && (
           <>
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
@@ -177,9 +190,9 @@ export default function LaporanPOSPage() {
                 color="pink"
               />
               <StatCard
-                title="Total Pelanggan"
-                value={totals.totalPelanggan.toLocaleString('id-ID')}
-                icon={Users}
+                title="Total Transaksi"
+                value={totals.totalTransaksi.toLocaleString('id-ID')}
+                icon={ShoppingCart}
                 trend="up"
                 trendValue="8.3"
                 color="purple"
@@ -191,6 +204,14 @@ export default function LaporanPOSPage() {
                 trend="up"
                 trendValue="5.7"
                 color="blue"
+              />
+              <StatCard
+                title="Total Barang Terjual"
+                value={totals.totalBarangTerjual.toLocaleString('id-ID')}
+                icon={Users}
+                trend="up"
+                trendValue="3.2"
+                color="orange"
               />
             </div>
 
@@ -223,7 +244,7 @@ export default function LaporanPOSPage() {
                 
                 <div className="h-80">
                   <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={data}>
+                    <AreaChart data={trenData}>
                       <defs>
                         <linearGradient id="colorGradient" x1="0" y1="0" x2="0" y2="1">
                           <stop offset="5%" stopColor="#ec4899" stopOpacity={0.3}/>
@@ -281,7 +302,7 @@ export default function LaporanPOSPage() {
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
-                        data={categoryData} // categoryData is static, so it's fine
+                        data={categoryData}
                         cx="50%"
                         cy="50%"
                         innerRadius={40}
@@ -294,7 +315,10 @@ export default function LaporanPOSPage() {
                         ))}
                       </Pie>
                       <Tooltip 
-                        formatter={(value) => [`${value}%`, 'Persentase']}
+                        formatter={(value, name, props) => [
+                          `${value}%`,
+                          props && props.payload && props.payload.name ? props.payload.name : 'Persentase'
+                        ]}
                         contentStyle={{ 
                           backgroundColor: 'rgba(255, 255, 255, 0.95)',
                           border: '1px solid #fecaca',
@@ -335,17 +359,17 @@ export default function LaporanPOSPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {data.slice(-7).reverse().map((item, index) => (
+                    {trenData.slice(-7).reverse().map((item, index) => (
                       <tr key={index} className="border-b border-pink-50 hover:bg-pink-50/50 transition-colors">
-                        <td className="py-3 px-4 text-gray-800">{item.date}</td>
+                        <td className="py-3 px-4 text-gray-800">{item.name}</td>
                         <td className="py-3 px-4 text-right font-medium text-gray-800">
-                          {formatRupiah(item.pendapatan)}
+                          {formatRupiah(item.totalSales || 0)}
                         </td>
                         <td className="py-3 px-4 text-right text-gray-600">
-                          {item.pelanggan.toLocaleString('id-ID')}
+                          {item.totalTransactions ? item.totalTransactions.toLocaleString('id-ID') : 0}
                         </td>
                         <td className="py-3 px-4 text-right font-medium text-pink-600">
-                          {formatRupiah(item.pendapatan / item.transaksi)}
+                          {formatRupiah(item.totalSales && item.totalTransactions ? item.totalSales / item.totalTransactions : 0)}
                         </td>
                       </tr>
                     ))}

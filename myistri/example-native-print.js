@@ -1,9 +1,11 @@
 import formatRupiah from './rupiah';
+import { BluetoothEscposPrinter } from 'react-native-bluetooth-escpos-printer';
 
 export const printReceipt = (orderData) => {
   const printWindow = window.open('', '', 'width=300');
   if (!printWindow) return;
 
+  // Format tanggal dan jam dari transactionDate
   const dateObj = orderData.transactionDate ? new Date(orderData.transactionDate) : new Date();
   const tanggal = dateObj.toLocaleDateString('id-ID', {
     day: '2-digit',
@@ -104,4 +106,13 @@ export const printReceipt = (orderData) => {
   }, 250);
 };
 
-
+// Fungsi print sederhana untuk aplikasi native
+export const printReceiptNative = async (orderData) => {
+  await BluetoothEscposPrinter.printText(
+    `Toko: ${orderData.store?.name || 'ELAINA POS'}\r\n`, {}
+  );
+  await BluetoothEscposPrinter.printText(
+    `Tanggal: ${orderData.transactionDate}\r\n`, {}
+  );
+  // Tambahkan perintah print untuk item, total, dan lainnya sesuai kebutuhan
+};

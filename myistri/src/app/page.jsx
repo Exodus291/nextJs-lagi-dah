@@ -166,10 +166,11 @@ export default function Home() {
       customerName: customerName.trim(),
       customerNote: customerNote.trim(),
       transactionItems: selectedItems.map(item => ({
-      menuId: item.id,
-      menuName: item.name,
-      quantity: item.qty,
-      priceAtTransaction: Number(item.price)
+        menuId: item.id,
+        menuName: item.name,
+        menuCategory: item.category, // Tambahkan category di sini
+        quantity: item.qty,
+        priceAtTransaction: Number(item.price)
       })),
       totalAmount: totalPrice,
       paymentMethod: selectedPaymentMethod || null,
