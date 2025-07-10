@@ -7,6 +7,7 @@ import formatRupiah from '../../utils/rupiah';
 import api from '@/lib/api';
 
 const periods = {
+  '1': { label: 'Hari Ini', days: 1 },
   '7': { label: 'Minggu Ini', days: 7 },
   '30': { label: 'Bulan Ini', days: 30 },
   '90': { label: '3 Bulan', days: 90 }
@@ -14,7 +15,7 @@ const periods = {
 
 export default function LaporanPOSPage() {
   const [isClient, setIsClient] = useState(false);
-  const [selectedPeriod, setSelectedPeriod] = useState('30');
+  const [selectedPeriod, setSelectedPeriod] = useState('1'); // Default ke 'Hari Ini'
   const [activeChart, setActiveChart] = useState('pendapatan');
   const [data, setData] = useState({});
   const [loading, setLoading] = useState(true);
@@ -120,6 +121,80 @@ export default function LaporanPOSPage() {
     );
   };
 
+  // Untuk chart harian, gunakan data array harian jika ada, fallback ke data hari ini
+  let dailyData = Array.isArray(safeData.dailySummary) && safeData.dailySummary.length > 0
+    ? safeData.dailySummary.map(item => ({
+        ...item,
+        date: item.date || item.transactionDate || '', // pastikan ada key 'date'
+        totalSales: item.totalSales ?? 0,
+        totalTransactions: item.totalTransactions ?? 0,
+      }))
+    : [{
+        date: reportDate,
+        totalSales: safeData.totalSales || 0,
+        totalTransactions: safeData.totalTransactions || 0,
+      }];
+
+  // Jika periode adalah hari ini, gunakan data per jam jika tersedia
+  let chartData = dailyData;
+  if (
+    selectedPeriod === '1' &&
+    Array.isArray(safeData.hourlySummary) &&
+    safeData.hourlySummary.length > 0
+  ) {
+    chartData = safeData.hourlySummary.map(item => ({
+      ...item,
+      date: item.transactionTime
+        ? new Date(item.transactionTime).getHours().toString().padStart(2, '0')
+        : (item.hour || ''),
+      totalSales: item.totalSales ?? 0,
+      totalTransactions: item.totalTransactions ?? 0,
+    }));
+  }
+
+  // Mapping chart key ke data tren
+  const chartKeyMap = {
+    pendapatan: 'totalSales',
+    pelanggan: 'totalTransactions'
+  };
+  const chartDataKey = chartKeyMap[activeChart];
+
+  // Hitung total QRIS dan Tunai dari data transaksi
+  const totalQris = Array.isArray(safeData.transactions)
+    ? safeData.transactions
+        .filter(trx => (trx.paymentMethod || '').toLowerCase().includes('qris'))
+        .reduce((sum, trx) => sum + Number(trx.totalAmount || 0), 0)
+    : 0;
+
+  const totalTunai = Array.isArray(safeData.transactions)
+    ? safeData.transactions
+        .filter(trx => (trx.paymentMethod || '').toLowerCase().includes('cash') || (trx.paymentMethod || '').toLowerCase().includes('tunai'))
+        .reduce((sum, trx) => sum + Number(trx.totalAmount || 0), 0)
+    : 0;
+
+  // Build menu sales summary from transactions' items
+  const menuSalesSummary = {};
+  if (Array.isArray(safeData.transactions)) {
+    safeData.transactions.forEach(trx => {
+      if (Array.isArray(trx.items)) {
+        trx.items.forEach(item => {
+          const key = `${item.menu} (${item.category})`;
+          if (!menuSalesSummary[key]) {
+            menuSalesSummary[key] = {
+              menu: item.menu,
+              category: item.category,
+              qty: 0,
+              priceAtTransaction: Number(item.priceAtTransaction || 0),
+              total: 0,
+            };
+          }
+          menuSalesSummary[key].qty += Number(item.quantity || 0);
+          menuSalesSummary[key].total += Number(item.priceAtTransaction || 0) * Number(item.quantity || 0);
+        });
+      }
+    });
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-rose-50 to-white p-6">
       <div className="max-w-7xl mx-auto">
@@ -179,200 +254,100 @@ export default function LaporanPOSPage() {
         )}
         {isClient && !loading && !error && (
           <>
-            {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+            {/* Card List Section */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
               <StatCard
                 title="Total Pendapatan"
-                value={formatRupiah(totals.totalPendapatan)}
+                value={formatRupiah(totalPendapatan)}
                 icon={DollarSign}
-                trend="up"
-                trendValue="12.5"
                 color="pink"
               />
               <StatCard
-                title="Total Transaksi"
-                value={totals.totalTransaksi.toLocaleString('id-ID')}
-                icon={ShoppingCart}
-                trend="up"
-                trendValue="8.3"
-                color="purple"
-              />
-              <StatCard
-                title="Rata-rata Transaksi"
-                value={formatRupiah(totals.avgTransaksi)}
-                icon={TrendingUp}
-                trend="up"
-                trendValue="5.7"
+                title="Total Pelanggan"
+                value={totalPelanggan.toLocaleString('id-ID')}
+                icon={Users}
                 color="blue"
               />
               <StatCard
-                title="Total Barang Terjual"
-                value={totals.totalBarangTerjual.toLocaleString('id-ID')}
-                icon={Users}
-                trend="up"
-                trendValue="3.2"
+                title="Total QRIS"
+                value={formatRupiah(totalQris)}
+                icon={TrendingUp}
+                color="purple"
+              />
+              <StatCard
+                title="Total Tunai"
+                value={formatRupiah(totalTunai)}
+                icon={ShoppingCart}
                 color="orange"
               />
             </div>
-
-            {/* Charts Section */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-              
-              {/* Main Chart */}
-              <div className="lg:col-span-2 bg-white/80 backdrop-blur-xl rounded-2xl shadow-xl border border-pink-100/50 p-6">
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-xl font-bold text-gray-800">Tren Performa</h3>
-                  <div className="flex items-center space-x-2">
-                    {[
-                      { key: 'pendapatan', label: 'Pendapatan', color: '#ec4899' },
-                      { key: 'pelanggan', label: 'Pelanggan', color: '#f43f5e' },
-                    ].map((chart) => (
-                      <button
-                        key={chart.key}
-                        onClick={() => setActiveChart(chart.key)}
-                        className={`px-3 py-1 rounded-lg text-sm font-medium transition-all duration-300 ${
-                          activeChart === chart.key
-                            ? 'bg-pink-100 text-pink-700 shadow-md'
-                            : 'text-gray-600 hover:bg-gray-100'
-                        }`}
-                      >
-                        {chart.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                
-                <div className="h-80">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={trenData}>
-                      <defs>
-                        <linearGradient id="colorGradient" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#ec4899" stopOpacity={0.3}/>
-                          <stop offset="95%" stopColor="#ec4899" stopOpacity={0}/>
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                      <XAxis 
-                        dataKey="date" 
-                        stroke="#64748b" 
-                        fontSize={12}
-                        tickLine={false}
-                      />
-                      <YAxis 
-                        stroke="#64748b" 
-                        fontSize={12}
-                        tickLine={false}
-                        tickFormatter={(value) => 
-                          activeChart === 'pendapatan' 
-                            ? `${(value / 1000)}K` 
-                            : value.toString()
-                        }
-                      />
-                      <Tooltip 
-                        contentStyle={{ 
-                          backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                          border: '1px solid #fecaca',
-                          borderRadius: '12px',
-                          boxShadow: '0 10px 25px rgba(0,0,0,0.1)'
-                        }}
-                        formatter={(value) => [
-                          activeChart === 'pendapatan' 
-                            ? formatRupiah(value)
-                            : value.toLocaleString('id-ID'),
-                          activeChart.charAt(0).toUpperCase() + activeChart.slice(1)
-                        ]}
-                      />
-                      <Area
-                        type="monotone"
-                        dataKey={activeChart}
-                        stroke="#ec4899"
-                        strokeWidth={3}
-                        fillOpacity={1}
-                        fill="url(#colorGradient)"
-                      />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-
-              {/* Category Distribution */}
-              <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-xl border border-pink-100/50 p-6">
-                <h3 className="text-xl font-bold text-gray-800 mb-6">Kategori Penjualan</h3>
-                <div className="h-64">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={categoryData}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={40}
-                        outerRadius={80}
-                        paddingAngle={5}
-                        dataKey="value"
-                      >
-                        {categoryData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
-                        ))}
-                      </Pie>
-                      <Tooltip 
-                        formatter={(value, name, props) => [
-                          `${value}%`,
-                          props && props.payload && props.payload.name ? props.payload.name : 'Persentase'
-                        ]}
-                        contentStyle={{ 
-                          backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                          border: '1px solid #fecaca',
-                          borderRadius: '12px'
-                        }}
-                      />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-                <div className="space-y-2 mt-4">
-                  {categoryData.map((item, index) => (
-                    <div key={index} className="flex items-center justify-between">
-                      <div className="flex items-center space-x-2">
-                        <div 
-                          className="w-3 h-3 rounded-full" 
-                          style={{ backgroundColor: item.color }}
-                        ></div>
-                        <span className="text-sm text-gray-600">{item.name}</span>
-                      </div>
-                      <span className="text-sm font-medium text-gray-800">{item.value}%</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
             {/* Recent Transactions Table */}
-            <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-xl border border-pink-100/50 p-6">
-              <h3 className="text-xl font-bold text-gray-800 mb-6">Performa Harian Detail</h3>
+            <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-xl border border-pink-100/50 p-6 mt-8">
+              <h3 className="text-xl font-bold text-gray-800 mb-6">Transaksi Terbaru</h3>
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
                     <tr className="border-b border-pink-100">
+                      <th className="text-left py-3 px-4 font-semibold text-gray-700">Nama Pelanggan</th>
                       <th className="text-left py-3 px-4 font-semibold text-gray-700">Tanggal</th>
-                      <th className="text-right py-3 px-4 font-semibold text-gray-700">Pendapatan</th>
-                      <th className="text-right py-3 px-4 font-semibold text-gray-700">Pelanggan</th>
-                      <th className="text-right py-3 px-4 font-semibold text-gray-700">Avg/Transaksi</th>
+                      <th className="text-left py-3 px-4 font-semibold text-gray-700">Metode Pembayaran</th>
+                      <th className="text-right py-3 px-4 font-semibold text-gray-700">Total</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {trenData.slice(-7).reverse().map((item, index) => (
-                      <tr key={index} className="border-b border-pink-50 hover:bg-pink-50/50 transition-colors">
-                        <td className="py-3 px-4 text-gray-800">{item.name}</td>
-                        <td className="py-3 px-4 text-right font-medium text-gray-800">
-                          {formatRupiah(item.totalSales || 0)}
-                        </td>
-                        <td className="py-3 px-4 text-right text-gray-600">
-                          {item.totalTransactions ? item.totalTransactions.toLocaleString('id-ID') : 0}
-                        </td>
-                        <td className="py-3 px-4 text-right font-medium text-pink-600">
-                          {formatRupiah(item.totalSales && item.totalTransactions ? item.totalSales / item.totalTransactions : 0)}
-                        </td>
+                    {Array.isArray(safeData.transactions) && safeData.transactions.length > 0 ? (
+                      safeData.transactions.map((trx, idx) => (
+                        <tr key={trx.id || idx} className="border-b border-pink-50 hover:bg-pink-50/50 transition-colors">
+                          <td className="py-3 px-4 text-gray-800">{trx.customerName || '-'}</td>
+                          <td className="py-3 px-4 text-gray-600">
+                            {trx.transactionDate ? new Date(trx.transactionDate).toLocaleString('id-ID') : '-'}
+                          </td>
+                          <td className="py-3 px-4 text-gray-600">{trx.paymentMethod || '-'}</td>
+                          <td className="py-3 px-4 text-right font-medium text-gray-800">
+                            {formatRupiah(Number(trx.totalAmount) || 0)}
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={4} className="py-3 px-4 text-center text-gray-500">Tidak ada transaksi</td>
                       </tr>
-                    ))}
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Menu Sales Summary */}
+            <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-xl border border-pink-100/50 p-6 mt-8">
+              <h3 className="text-xl font-bold text-gray-800 mb-6">Ringkasan Penjualan Menu</h3>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-pink-100">
+                      <th className="text-left py-3 px-4 font-semibold text-gray-700">Menu</th>
+                      <th className="text-left py-3 px-4 font-semibold text-gray-700">Kategori</th>
+                      <th className="text-right py-3 px-4 font-semibold text-gray-700">Jumlah Terjual</th>
+                      <th className="text-right py-3 px-4 font-semibold text-gray-700">Total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {Object.keys(menuSalesSummary).length > 0
+                      ? Object.entries(menuSalesSummary).map(([menuKey, detail]) => (
+                          <tr key={menuKey} className="border-b border-pink-50 hover:bg-pink-50/50 transition-colors">
+                            <td className="py-3 px-4 text-gray-800">{detail.menu}</td>
+                            <td className="py-3 px-4 text-gray-600">{detail.category}</td>
+                            <td className="py-3 px-4 text-right text-gray-600">{detail.qty}</td>
+                            <td className="py-3 px-4 text-right font-medium text-gray-800">
+                              {formatRupiah(detail.total)}
+                            </td>
+                          </tr>
+                        ))
+                      : (
+                        <tr>
+                          <td colSpan={4} className="py-3 px-4 text-center text-gray-500">Tidak ada data menu</td>
+                        </tr>
+                      )}
                   </tbody>
                 </table>
               </div>
